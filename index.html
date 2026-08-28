@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WardiyGame798 — Kéo Búa Bao</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { 
+      max-width: 800px; margin: 0 auto; padding: 20px; padding-top: 70px; text-align: center; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      min-height: 100vh; color: #fff; 
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    
+    .menu-btn { 
+      position: fixed; top: 15px; left: 15px; background: #fff; color: #667eea; 
+      border: none; font-size: 28px; padding: 5px 12px; border-radius: 8px; cursor: pointer; 
+      z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .menu-panel { 
+      position: fixed; top: 0; left: 0; width: 300px; max-width: 90%; height: 100vh; 
+      background: #fff; color: #333; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.3); 
+      transform: translateX(-100%); transition: transform 0.3s ease; z-index: 101; overflow-y: auto;
+    }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-panel h3 { margin-top: 0; }
+    .close-btn { margin-top: 20px; width: 100%; padding: 10px; background: #667eea; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .toggle-row { margin: 15px 0; text-align: left; }
+    
+    h1 { font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .card { background: rgba(255,255,255,0.2); padding: 25px; border-radius: 16px; margin: 15px 0; backdrop-filter: blur(10px); }
+    input, select { padding: 12px; font-size: 18px; border-radius: 8px; border: none; width: 80%; max-width: 300px; margin: 8px 0; }
+    input[type="range"] { width: 80%; max-width: 300px; }
+    
+    button { 
+      padding: 14px 28px; margin: 8px; font-size: 18px; border-radius: 12px; border: none; 
+      cursor: pointer; font-weight: bold; transition: transform 0.15s, box-shadow 0.15s; 
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    button:active { transform: translateY(0); }
+    .btn-primary { background: #ffd700; color: #333; }
+    .btn-secondary { background: #fff; color: #667eea; }
+    .btn-danger { background: #ff4757; color: #fff; }
+    .choice-btn { font-size: 40px; padding: 20px 30px; margin: 10px; background: #fff; border-radius: 50%; width: 110px; height: 110px; }
+    .avatar-option { 
+      display: inline-block; width: 70px; height: 70px; font-size: 40px; line-height: 70px; 
+      background: rgba(255,255,255,0.3); border-radius: 50%; margin: 5px; cursor: pointer; 
+      border: 3px solid transparent; transition: border 0.2s, background 0.2s; 
+    }
+    .avatar-option.selected { border-color: #ffd700; background: rgba(255,255,255,0.5); }
+    
+    /* Bảng điểm và tên */
+    .score-board { 
+      font-size: 1.3em; margin: 20px auto; padding: 15px; background: rgba(0,0,0,0.2); 
+      border-radius: 12px; max-width: 400px; display: flex; justify-content: space-around; align-items: center;
+    }
+    .player-score { padding: 10px; }
+    .player-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
+    .player-points { font-size: 1.8em; font-weight: bold; color: #ffd700; }
+    .vs-text { font-size: 1.5em; opacity: 0.7; }
+    
+    .status-msg { font-size: 1.1em; min-height: 80px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; margin: 10px 0; line-height: 1.4; }
+    .player-list { text-align: left; max-width: 400px; margin: 20px auto; }
+    .player-item { padding: 10px; margin: 5px 0; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 16px; display: flex; justify-content: space-between; }
+    .eliminated { opacity: 0.5; text-decoration: line-through; }
+    .hidden { display: none !important; }
+    .number-display { font-size: 1.5em; font-weight: bold; margin: 10px 0; }
+    .result-compare { font-size: 1.2em; margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuToggle" aria-label="Mở menu tùy chọn">☰</button>
+
+<div class="menu-panel" id="menuPanel" aria-hidden="true">
+  <h3>⚙️ Tùy chọn & Hỗ trợ tiếp cận</h3>
+  <div class="toggle-row">
+    <label style="font-size: 16px; cursor: pointer;">
+      <input type="checkbox" id="announceResult"> 
+      Đọc thông báo thắng/thua/hòa
+    </label>
+  </div>
+  <div class="toggle-row">
+    <label style="font-size: 16px; cursor: pointer;">
+      <input type="checkbox" id="announceTaunt"> 
+      Đọc lời nói của đối phương
+    </label>
+  </div>
+  <div class="toggle-row">
+    <label style="font-size: 16px; cursor: pointer;">
+      <input type="checkbox" id="enableSound" checked> 
+      Bật hiệu ứng âm thanh
+    </label>
+  </div>
+  <button class="close-btn" id="closeMenu">Đóng menu</button>
+</div>
+
+<!-- Màn hình 0: Chào mừng -->
+<div id="screen-welcome" class="screen active">
+  <h1>🎮 WardiyGame798 🎮</h1>
+  <h2>Kéo Búa Bao — Cà khịa siêu cấp!</h2>
+  <div class="card">
+    <p>Chào mừng đến với sòng đấu! Đặt tên và chọn biểu tượng trước khi vào chơi nhé!</p>
+    <input type="text" id="playerName" placeholder="Nhập tên của bạn" aria-label="Tên người chơi" maxlength="20">
+    
+    <p>Chọn biểu tượng đại diện:</p>
+    <div id="avatarPicker" aria-label="Chọn biểu tượng đại diện">
+      <span class="avatar-option" data-avatar="🦖" role="button" tabindex="0" aria-label="Khủng long">🦖</span>
+      <span class="avatar-option" data-avatar="🐉" role="button" tabindex="0" aria-label="Rồng">🐉</span>
+      <span class="avatar-option" data-avatar="🐸" role="button" tabindex="0" aria-label="Ếch">🐸</span>
+      <span class="avatar-option" data-avatar="🐹" role="button" tabindex="0" aria-label="Chuột lang nước">🐹</span>
+      <span class="avatar-option" data-avatar="🐰" role="button" tabindex="0" aria-label="Thỏ">🐰</span>
+      <span class="avatar-option" data-avatar="🐱" role="button" tabindex="0" aria-label="Mèo">🐱</span>
+      <span class="avatar-option" data-avatar="🐶" role="button" tabindex="0" aria-label="Chó">🐶</span>
+      <span class="avatar-option" data-avatar="🐧" role="button" tabindex="0" aria-label="Chim cánh cụt">🐧</span>
+      <span class="avatar-option" data-avatar="🦭" role="button" tabindex="0" aria-label="Hải cẩu">🦭</span>
+      <span class="avatar-option" data-avatar="🦜" role="button" tabindex="0" aria-label="Vẹt">🦜</span>
+    </div>
+    
+    <button class="btn-primary" id="btnStart" aria-label="Bắt đầu chơi">Bắt đầu ▶️</button>
+  </div>
+</div>
+
+<!-- Màn hình 1: Chọn chế độ -->
+<div id="screen-mode" class="screen">
+  <h2>Chọn chế độ chơi</h2>
+  <div class="card">
+    <button class="btn-primary" id="btnVsAI" aria-label="Chơi với máy">🤖 Chơi với máy</button>
+    <br><br>
+    <button class="btn-secondary" id="btnVsFriends" aria-label="Chơi với bạn bè" disabled>👥 Chơi với bạn bè (sắp mở)</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackWelcome" aria-label="Quay lại màn hình bắt đầu">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình 2: Chơi với máy — chọn kiểu -->
+<div id="screen-ai-select" class="screen">
+  <h2>Chơi với máy</h2>
+  <div class="card">
+    <button class="btn-primary" id="btnSingleVsAI" aria-label="Chơi một người với máy">1 vs Máy — Tính điểm đến 10</button>
+    <br><br>
+    <button class="btn-secondary" id="btnMultiVsAI" aria-label="Chơi nhiều người với máy">Nhiều người — Loại bỏ dần</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackMode" aria-label="Quay lại chọn chế độ">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình 3: Chọn số máy -->
+<div id="screen-ai-count" class="screen">
+  <h2>Chọn số lượng đối thủ máy</h2>
+  <div class="card">
+    <p>Số lượng máy đối thủ:</p>
+    <div class="number-display"><span id="aiCountDisplay">1</span> máy</div>
+    <input type="range" id="aiCountSlider" min="1" max="9" value="1" aria-label="Số lượng máy đối thủ">
+    <p>Tổng số người chơi: <span id="totalPlayersDisplay">2</span> người (tính cả bạn)</p>
+    <br>
+    <button class="btn-primary" id="btnStartAI" aria-label="Bắt đầu chơi với máy">Bắt đầu chơi! 🎮</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackAISelect" aria-label="Quay lại">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình 4: Chơi game -->
+<div id="screen-game" class="screen">
+  <h2 id="gameTitle">Trận đấu</h2>
+  
+  <!-- Bảng điểm 1vs1 -->
+  <div id="scoreBoard" class="score-board" style="display: none;">
+    <div class="player-score">
+      <div class="player-name" id="playerNameDisplay">Bạn</div>
+      <div class="player-points" id="playerPoints">0</div>
+    </div>
+    <div class="vs-text">VS</div>
+    <div class="player-score">
+      <div class="player-name" id="aiNameDisplay">Máy</div>
+      <div class="player-points" id="aiPoints">0</div>
+    </div>
+  </div>
+  
+  <!-- Danh sách người chơi nhiều người -->
+  <div id="playerListContainer" class="card player-list" style="display: none;">
+    <h3>Danh sách người chơi:</h3>
+    <div id="playerList"></div>
+  </div>
+  
+  <!-- Kết quả vòng đấu -->
+  <div id="resultCompare" class="result-compare"></div>
+  
+  <!-- Thông báo trạng thái -->
+  <div class="status-msg" id="statusMsg" aria-live="polite">Đang chuẩn bị...</div>
+  
+  <!-- Nút chọn kéo/búa/bao -->
+  <div id="gameControls" class="hidden">
+    <p>Bạn chọn lượt đi:</p>
+    <button class="choice-btn" data-choice="rock" aria-label="Búa">✊</button>
+    <button class="choice-btn" data-choice="scissors" aria-label="Kéo">✌️</button>
+    <button class="choice-btn" data-choice="paper" aria-label="Bao">🖐️</button>
+  </div>
+  
+  <!-- Nút khi kết thúc -->
+  <div id="gameEndActions" class="hidden">
+    <button class="btn-primary" id="btnPlayAgain" aria-label="Chơi lại">🔄 Chơi lại</button>
+    <br><br>
+  </div>
+  
+  <button class="btn-secondary" id="btnBackToMenu" aria-label="Quay lại menu">⬅️ Quay lại menu</button>
+</div>
+
+
+<script>
+  // ===== BIẾN TOÀN CỤC =====
+  let playerName = "";
+  let playerAvatar = "🦖";
+  let aiOpponentName = "";
+  let aiOpponentCount = 1;
+  let gameMode = null; // 'ai-single' hoặc 'ai-multi'
+  let scorePlayer = 0;
+  let scoreAI = 0;
+  let gameEnded = false;
+  let aiPlayers = {}; // cho chế độ nhiều người
+
+  // Cài đặt
+  let accessSettings = { 
+    announceResult: false, 
+    announceTaunt: false, 
+    soundEnabled: true
+  };
+
+  // ===== HỆ THỐNG ÂM THANH =====
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playSound(type) {
+    if (!accessSettings.soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+
+    switch(type) {
+      case 'click':
+        osc.frequency.value = 600; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+        break;
+      case 'win':
+        [523.25, 659.25, 783.99].forEach((f, i) => {
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.connect(g); g.connect(audioCtx.destination);
+          o.frequency.value = f; o.type = 'sine';
+          g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.1);
+          g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.15);
+          o.start(audioCtx.currentTime + i * 0.1); o.stop(audioCtx.currentTime + i * 0.1 + 0.15);
+        });
+        break;
+      case 'lose':
+        osc.frequency.value = 300; osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
+        break;
+      case 'tie':
+        osc.frequency.value = 400; osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.15);
+        break;
+      case 'complete':
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.connect(g); g.connect(audioCtx.destination);
+          o.frequency.value = f; o.type = 'sine';
+          g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.12 + 0.2);
+          o.start(audioCtx.currentTime + i * 0.12); o.stop(audioCtx.currentTime + i * 0.12 + 0.2);
+        });
+        break;
+    }
+  }
+
+  // ===== DANH SÁCH TÊN MÁY & LỜI NÓI =====
+  const aiNames = [
+    "Búa Bao Vương 👑", "Kéo Siêu Văng ✂️", "Bao Bao Đường 🖐️", 
+    "Đầu To Chơi Dở 🤕", "Chân Ngắn Chạy Chậm 🦵", "Thua Không Khóc 😭", 
+    "Đấu Sĩ Mới Nhập Môn 🐣", "Thần Sầu Cấp 3 🤡", "Bốc Bừa Bốc Ngẫu 🎲",
+    "Mày Đâu Thắng Được Tao 😎", "Tao Chơi Bằng Cảm Xúc 💖", "Kéo Luôn Thắng ✌️",
+    "Búa Này Không Có Nhọn 🪨", "Tới Mày Rồi Nè 😉", "Đừng Khóc Nha Thua Cũng Bình Thường 😂",
+    "Tao Đoán Mày Sẽ Búa 🤔", "Mày Đang Sợ Rồi Phải Không 😏", "Để Tao Dạy Mày Chơi 👨‍🏫",
+    "Thua Nhiều Sẽ Thành Thạo 💪", "Tao Đi Trước Nha 🚶‍♂️", "Chơi Cho Vui Thôi Mà Bạn 🌸",
+    "Tao Có Kẹo Đây Nè 🍬", "Đừng Nhìn Nhau Mà Chơi Đi 😉", "Chơi Bằng Trực Giác Thôi 👁️"
+  ];
+
+  const tauntsWin = [
+    "Hahaha, mày ăn hành nha! 😂", "Đi về tập lại nha em 👋", 
+    "Cỡ này thì tao chơi mười người một lúc cũng được 😎", "Mày chưa đủ trình đâu nha 😉",
+    "Ối giời ơi, yếu quá vậy má 😆", "Thua không khóc nha, có kẹo đây 😜",
+    "Tao đã nói mày không thắng được tao mà, không nghe! 🤷‍♂️",
+    "Đầu hàng đi, không có cửa đâu nha bạn 😏", "Nâng cấp trình trước rồi đấu tiếp nha! 📚"
+  ];
+
+  const tauntsLose = [
+    "Ối, mày lừa tao à! 😤", "Đừng Mừng Quá Sớm Nha! Lần Sau Tao Rửa Hận! 😠",
+    "May Thôi! Đúng Là May Rủi! 🎲", "Ừ được đó, có chút tiến bộ 😉",
+    "Đừng Kiêu, Lần Sau Mày Xem! 😒", "Ối chao, tao lỡ tay rồi 😭",
+    "Được mấy ván thôi, đừng nghĩ mình giỏi nha 😏", "Chờ đó, tao trả thù liền! 🏃‍♂️"
+  ];
+
+  const tauntsTie = [
+    "Ồ, cùng suy nghĩ à? Tình yêu à? 😏", "Kẹt này kìa, ai cũng không tiến bộ được 😂",
+    "Đồng thanh đồng khí, hay là mình có duyên? 😜", "Hai đứa bằng nhau, xỉu ai đây? 🤔",
+    "Song kiếm hợp bích à? Cùng chọn luôn à 😆"
+  ];
+
+  const choiceEmoji = { rock: '✊ Búa', paper: '🖐️ Bao', scissors: '✌️ Kéo' };
+
+  // ===== HÀM HỖ TRỢ =====
+  function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function getRandomAIName() { return getRandomItem(aiNames); }
+
+  function speak(text) {
+    if (!accessSettings.announceResult || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'vi-VN'; u.volume = 1; u.rate = 1.1; u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    closeMenuPanel();
+  }
+
+  function closeMenuPanel() {
+    document.getElementById('menuPanel').classList.remove('open');
+    document.getElementById('menuPanel').setAttribute('aria-hidden', 'true');
+  }
+
+  function determineWinner(choice1, choice2) {
+    if (choice1 === choice2) return 'tie';
+    if (
+      (choice1 === 'rock' && choice2 === 'scissors') ||
+      (choice1 === 'scissors' && choice2 === 'paper') ||
+      (choice1 === 'paper' && choice2 === 'rock')
+    ) return 'player';
+    return 'ai';
+  }
+
+  function setStatus(msg, speakText = '') {
+    document.getElementById('statusMsg').textContent = msg;
+    if (speakText) speak(speakText);
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('playerPoints').textContent = scorePlayer;
+    document.getElementById('aiPoints').textContent = scoreAI;
+  }
+
+  // ===== MENU =====
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    initAudio();
+    document.getElementById('menuPanel').classList.toggle('open');
+  });
+  document.getElementById('closeMenu').addEventListener('click', closeMenuPanel);
+
+  document.getElementById('announceResult').addEventListener('change', e => {
+    accessSettings.announceResult = e.target.checked;
+    if (e.target.checked) speak("Đã bật đọc thông báo");
+  });
+  document.getElementById('announceTaunt').addEventListener('change', e => {
+    accessSettings.announceTaunt = e.target.checked;
+  });
+  document.getElementById('enableSound').addEventListener('change', e => {
+    accessSettings.soundEnabled = e.target.checked;
+    if (e.target.checked) { initAudio(); playSound('click'); }
+  });
+
+  // ===== CHỌN AVATAR =====
+  document.querySelectorAll('.avatar-option').forEach(el => {
+    el.addEventListener('click', () => {
+      initAudio(); playSound('click');
+      document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+      el.classList.add('selected');
+      playerAvatar = el.dataset.avatar;
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+    });
+  });
+
+  // ===== NÚT ĐIỀU HƯỚNG =====
+  document.getElementById('btnStart').addEventListener('click', () => {
+    initAudio(); playSound('click');
+    playerName = document.getElementById('playerName').value.trim() || "Bạn";
+    showScreen('screen-mode');
+  });
+
+  document.getElementById('btnBackWelcome').addEventListener('click', () => { playSound('click'); showScreen('screen-welcome'); });
+  document.getElementById('btnBackMode').addEventListener('click', () => { playSound('click'); showScreen('screen-ai-select'); });
+  document.getElementById('btnBackAISelect').addEventListener('click', () => { playSound('click'); showScreen('screen-ai-select'); });
+  document.getElementById('btnBackToMenu').addEventListener('click', () => { 
+    playSound('click'); 
+    if (confirm('Quay lại menu? Trận đấu hiện tại sẽ bị mất!')) {
+      showScreen('screen-ai-select'); 
+    }
+  });
+
+  document.getElementById('btnVsAI').addEventListener('click', () => { playSound('click'); showScreen('screen-ai-select'); });
+  document.getElementById('btnSingleVsAI').addEventListener('click', () => { playSound('click'); startSingleVsAI(); });
+  document.getElementById('btnMultiVsAI').addEventListener('click', () => { playSound('click'); showScreen('screen-ai-count'); });
+
+  // Thanh trượt chọn số máy
+  const slider = document.getElementById('aiCountSlider');
+  slider.addEventListener('input', e => {
+    aiOpponentCount = parseInt(e.target.value);
+    document.getElementById('aiCountDisplay').textContent = aiOpponentCount;
+    document.getElementById('totalPlayersDisplay').textContent = aiOpponentCount + 1;
+  });
+  slider.dispatchEvent(new Event('input'));
+
+  document.getElementById('btnStartAI').addEventListener('click', () => { playSound('click'); startMultiVsAI(aiOpponentCount); });
+
+  // Nút chọn kéo/búa/bao
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (gameEnded) return;
+      initAudio(); playSound('click');
+      handleChoice(btn.dataset.choice);
+    });
+  });
+
+  document.getElementById('btnPlayAgain').addEventListener('click', () => {
+    playSound('click');
+    if (gameMode === 'ai-single') resetSingleGame();
+    else resetMultiGame();
+  });
+
+  // ===== LOGIC GAME 1 vs 1 =====
+  function startSingleVsAI() {
+    gameMode = 'ai-single';
+    gameEnded = false;
+    scorePlayer = 0;
+    scoreAI = 0;
+    aiOpponentName = getRandomAIName();
+    
+    showScreen('screen-game');
+    document.getElementById('gameTitle').textContent = '1 vs Máy — Tính điểm đến 10';
+    document.getElementById('scoreBoard').style.display = 'flex';
+    document.getElementById('playerListContainer').style.display = 'none';
+    document.getElementById('playerNameDisplay').textContent = playerName;
+    document.getElementById('aiNameDisplay').textContent = aiOpponentName;
+    updateScoreDisplay();
+    document.getElementById('resultCompare').textContent = '';
+    document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('gameEndActions').classList.add('hidden');
+    setStatus(`Bắt đầu! Đối thủ của bạn là: ${aiOpponentName}`, `Bắt đầu! Đối thủ là ${aiOpponentName}. Chọn đi!`);
+  }
+
+  function resetSingleGame() {
+    startSingleVsAI();
+  }
+
+  function handleChoice(playerChoice) {
+    if (gameEnded) return;
+    document.getElementById('gameControls').classList.add('hidden');
+
+    if (gameMode === 'ai-single') {
+      // Máy chọn ngẫu nhiên
+      const choices = ['rock', 'paper', 'scissors'];
+      const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+      
+      // Xác định kết quả
+      const result = determineWinner(playerChoice, aiChoice);
+      
+      // Hiện so sánh
+      document.getElementById('resultCompare').innerHTML = 
+        `${playerName}: ${choiceEmoji[playerChoice]}<br>${aiOpponentName}: ${choiceEmoji[aiChoice]}`;
+      
+      let msg = '';
+      let speechMsg = '';
+      
+      if (result === 'tie') {
+        playSound('tie');
+        const taunt = getRandomItem(tauntsTie);
+        msg = `Hòa! Cùng chọn ${choiceEmoji[playerChoice].split(' ')[1]}! ${taunt}`;
+        speechMsg = `Hòa! ${accessSettings.announceTaunt ? taunt : ''}`;
+      } else if (result === 'player') {
+        playSound('win');
+        scorePlayer++;
+        msg = `Bạn thắng ván này! 🎉`;
+        speechMsg = `Bạn thắng! Điểm: ${scorePlayer} đến ${scoreAI}`;
+      } else {
+        playSound('lose');
+        scoreAI++;
+        const taunt = getRandomItem(tauntsWin);
+        msg = `${aiOpponentName} thắng! ${taunt}`;
+        speechMsg = `${aiOpponentName} thắng! Điểm: ${scorePlayer} đến ${scoreAI}`;
+        if (accessSettings.announceTaunt) speechMsg += ' ' + taunt;
+      }
+      
+      updateScoreDisplay();
+      setStatus(msg, speechMsg);
+      
+      // Kiểm tra kết thúc
+      if (scorePlayer >= 10 || scoreAI >= 10) {
+        gameEnded = true;
+        playSound('complete');
+        const win = scorePlayer >= 10;
+        const finalMsg = win 
+          ? `🏆 CHÚC MỪNG ${playerName.toUpperCase()}! BẠN THẮNG TOÀN TRẬN! Kết quả: ${scorePlayer} — ${scoreAI} 🏆` 
+          : `😔 ${aiOpponentName} thắng toàn trận! Kết quả: ${scorePlayer} — ${scoreAI}. Cố gắng lần sau nha!`;
+        setStatus(finalMsg, win ? `Chúc mừng ${playerName}! Bạn thắng rồi!` : `${aiOpponentName} thắng rồi! Cố lên!`);
+        document.getElementById('gameControls').classList.add('hidden');
+        document.getElementById('gameEndActions').classList.remove('hidden');
+      } else {
+        // Tiếp tục vòng sau
+        setTimeout(() => {
+          document.getElementById('gameControls').classList.remove('hidden');
+          setStatus('Tiếp theo! Chọn kéo/búa/bao!', 'Tiếp theo!');
+        }, 1800);
+      }
+    }
+    else if (gameMode === 'ai-multi') {
+      handleMultiChoice(playerChoice);
+    }
+  }
+
+  // ===== LOGIC GAME NHIỀU NGƯỜI =====
+  function startMultiVsAI(count) {
+    gameMode = 'ai-multi';
+    gameEnded = false;
+    aiPlayers = {};
+    
+    // Tạo danh sách người chơi
+    aiPlayers['me'] = { name: playerName, avatar: playerAvatar, eliminated: false, isAI: false };
+    for (let i = 1; i <= count; i++) {
+      const id = 'ai-' + i;
+      aiPlayers[id] = { 
+        name: getRandomAIName(), 
+        avatar: ['🤖', '👾', '🎮', '🕹️', '🎯'][i % 5], 
+        eliminated: false, 
+        isAI: true 
+      };
+    }
+    
+    showScreen('screen-game');
+    document.getElementById('gameTitle').textContent = `Chơi với ${count} máy — Loại bỏ dần`;
+    document.getElementById('scoreBoard').style.display = 'none';
+    document.getElementById('playerListContainer').style.display = 'block';
+    document.getElementById('resultCompare').textContent = '';
+    renderPlayerList();
+    document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('gameEndActions').classList.add('hidden');
+    setStatus(`Bắt đầu! Có ${count + 1} người chơi. Ai thua sẽ bị loại!`, `Bắt đầu! ${count + 1} người chơi!`);
+  }
+
+  function resetMultiGame() {
+    startMultiVsAI(aiOpponentCount);
+  }
+
+  function renderPlayerList() {
+    const list = document.getElementById('playerList');
+    list.innerHTML = '';
+    Object.entries(aiPlayers).forEach(([id, p]) => {
+      const div = document.createElement('div');
+      div.className = 'player-item' + (p.eliminated ? ' eliminated' : '');
+      div.innerHTML = `<span>${p.avatar} ${p.name}</span><span>${p.eliminated ? '❌ Bị loại' : '✅ Đang chơi'}</span>`;
+      list.appendChild(div);
+    });
+  }
+
+  function handleMultiChoice(playerChoice) {
+    if (gameEnded) return;
+    document.getElementById('gameControls').classList.add('hidden');
+    
+    // Thu thập lựa chọn tất cả người chơi chưa bị loại
+    const choices = { me: playerChoice };
+    Object.entries(aiPlayers).forEach(([id, p]) => {
+      if (id !== 'me' && !p.eliminated) {
+        choices[id] = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
+      }
+    });
+    
+    // Đếm số lượng mỗi lựa chọn
+    const counts = { rock: 0, paper: 0, scissors: 0 };
+    Object.values(choices).forEach(c => counts[c]++);
+    
+    // Tìm lựa chọn bị loại (ít người chọn nhất)
+    const minCount = Math.min(...Object.values(counts));
+    const losingChoice = Object.keys(counts).find(k => counts[k] === minCount);
+    
+    // Loại bỏ những ai chọn lựa chọn đó
+    const eliminatedNames = [];
+    Object.entries(aiPlayers).forEach(([id, p]) => {
+      if (!p.eliminated && choices[id] === losingChoice) {
+        p.eliminated = true;
+        eliminatedNames.push(p.name);
+      }
+    });
+    
+    renderPlayerList();
+    
+    // Kiểm tra còn ai không
+    const remaining = Object.values(aiPlayers).filter(p => !p.eliminated);
+    
+    if (remaining.length === 1) {
+      gameEnded = true;
+      playSound('complete');
+      const winMsg = `🏆 ${remaining[0].name} THẮNG TOÀN TRẬN! 🏆`;
+      setStatus(winMsg, winMsg);
+      document.getElementById('gameControls').classList.add('hidden');
+      document.getElementById('gameEndActions').classList.remove('hidden');
+    } else {
+      eliminatedNames.length > 0 ? playSound('lose') : playSound('tie');
+      const msg = eliminatedNames.length > 0 
+        ? `${eliminatedNames.join(', ')} bị loại! Còn lại ${remaining.length} người! Tiếp tục!` 
+        : 'Không ai bị loại! Tiếp tục đấu!';
+      setStatus(msg, msg);
+      setTimeout(() => {
+        document.getElementById('gameControls').classList.remove('hidden');
+      }, 1800);
+    }
+  }
+
+  // ===== KHỞI TẠO =====
+  document.getElementById('playerName').value = '';
+  document.querySelector('.avatar-option').classList.add('selected');
+</script>
+
+</body>
+</html>
