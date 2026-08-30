@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WardiyGame798 — Kéo Búa Bao</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { 
+      max-width: 800px; margin: 0 auto; padding: 20px; padding-top: 70px; text-align: center; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      min-height: 100vh; color: #fff; 
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    
+    .menu-btn { 
+      position: fixed; top: 15px; left: 15px; background: #fff; color: #667eea; 
+      border: none; font-size: 28px; padding: 5px 12px; border-radius: 8px; cursor: pointer; 
+      z-index: 100; min-width: 44px; min-height: 44px;
+    }
+    .menu-btn:focus { outline: 3px solid #ffd700; outline-offset: 2px; }
+    
+    .menu-panel { 
+      position: fixed; top: 0; left: 0; width: 320px; max-width: 90%; height: 100vh; 
+      background: #fff; color: #333; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.3); 
+      transform: translateX(-100%); transition: transform 0.3s ease; z-index: 101; 
+      overflow-y: auto;
+    }
+    .menu-panel.open { transform: translateX(0); }
+    .close-btn { margin-top: 20px; width: 100%; padding: 12px; background: #667eea; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; min-height: 44px; }
+    .toggle-row { margin: 20px 0; text-align: left; }
+    .toggle-row label { font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 44px; }
+    .toggle-row input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; flex-shrink: 0; }
+    
+    h1 { font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .card { background: rgba(255,255,255,0.2); padding: 25px; border-radius: 16px; margin: 15px 0; }
+    input { padding: 12px; font-size: 18px; border-radius: 8px; border: none; width: 80%; max-width: 300px; margin: 8px 0; }
+    input:focus, button:focus, .avatar-option:focus, .count-option:focus { outline: 3px solid #ffd700; outline-offset: 2px; }
+    
+    button { 
+      padding: 14px 28px; margin: 8px; font-size: 18px; border-radius: 12px; border: none; 
+      cursor: pointer; font-weight: bold; transition: transform 0.15s; min-height: 48px;
+    }
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(0); }
+    .btn-primary { background: #ffd700; color: #333; }
+    .btn-secondary { background: #fff; color: #667eea; }
+    .btn-danger { background: #ff4757; color: #fff; }
+    .choice-btn { font-size: 40px; padding: 15px; margin: 10px; background: #fff; border-radius: 50%; width: 100px; height: 100px; border: none; }
+    .avatar-option { 
+      display: inline-block; width: 70px; height: 70px; font-size: 40px; line-height: 70px; 
+      background: rgba(255,255,255,0.3); border-radius: 50%; margin: 5px; cursor: pointer; 
+      border: 3px solid transparent; 
+    }
+    .avatar-option.selected { border-color: #ffd700; background: rgba(255,255,255,0.5); }
+    
+    .score-board { 
+      font-size: 1.3em; margin: 20px auto; padding: 15px; background: rgba(0,0,0,0.2); 
+      border-radius: 12px; max-width: 420px; display: flex; justify-content: space-around; align-items: center;
+    }
+    .player-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
+    .player-points { font-size: 2em; font-weight: bold; color: #ffd700; }
+    .vs-text { font-size: 1.5em; padding: 0 10px; }
+    
+    .level-progress { font-size: 1.1em; margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+    .progress-bar { height: 16px; background: rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden; margin: 8px 0; }
+    .progress-fill { height: 100%; background: #ffd700; width: 0%; transition: width 0.3s; }
+    
+    .room-code { font-size: 2em; font-weight: bold; color: #ffd700; letter-spacing: 5px; margin: 15px 0; }
+    .player-item { padding: 12px; margin: 5px 0; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; justify-content: space-between; }
+    .host-badge { background: #ffd700; color: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+    
+    .hidden { display: none !important; }
+    .result-compare { font-size: 1.1em; margin: 15px 0; min-height: 80px; }
+    .status-msg { font-size: 1.1em; min-height: 80px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; margin: 10px 0; }
+    
+    .count-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 320px; margin: 20px auto; }
+    .count-option { 
+      padding: 15px 10px; background: rgba(255,255,255,0.2); border-radius: 10px; 
+      cursor: pointer; font-size: 20px; font-weight: bold; border: 3px solid transparent;
+      min-height: 60px; display: flex; align-items: center; justify-content: center;
+    }
+    .count-option.selected { background: #ffd700; color: #333; border-color: #fff; transform: scale(1.05); }
+  </style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuToggle" aria-label="Mở menu">☰</button>
+
+<div class="menu-panel" id="menuPanel">
+  <h3>⚙️ Tùy chọn</h3>
+  <div class="toggle-row">
+    <label><input type="checkbox" id="accessibilityToggle"> Hỗ trợ đọc lời thoại</label>
+  </div>
+  <div class="toggle-row">
+    <label><input type="checkbox" id="musicToggle"> Nhạc nền</label>
+  </div>
+  <div class="toggle-row">
+    <label><input type="checkbox" id="soundToggle" checked> Âm thanh bấm nút</label>
+  </div>
+  <button class="close-btn" id="closeMenu">Đóng</button>
+</div>
+
+<!-- Màn hình Chào mừng -->
+<div id="screen-welcome" class="screen active">
+  <h1>🎮 WardiyGame798 🎮</h1>
+  <h2>Kéo Búa Bao — Cà khịa siêu cấp!</h2>
+  <div class="card">
+    <p>Đặt tên và chọn biểu tượng trước khi vào chơi nhé!</p>
+    <input type="text" id="playerNameInput" placeholder="Nhập tên của bạn" maxlength="20">
+    
+    <p>Chọn biểu tượng đại diện:</p>
+    <div id="avatarPicker">
+      <span class="avatar-option selected" data-avatar="🦖">🦖</span>
+      <span class="avatar-option" data-avatar="🐉">🐉</span>
+      <span class="avatar-option" data-avatar="🐸">🐸</span>
+      <span class="avatar-option" data-avatar="🐹">🐹</span>
+      <span class="avatar-option" data-avatar="🐰">🐰</span>
+      <span class="avatar-option" data-avatar="🐱">🐱</span>
+      <span class="avatar-option" data-avatar="🐶">🐶</span>
+      <span class="avatar-option" data-avatar="🐧">🐧</span>
+      <span class="avatar-option" data-avatar="🦭">🦭</span>
+      <span class="avatar-option" data-avatar="🦜">🦜</span>
+    </div>
+    
+    <button class="btn-primary" id="btnStart">Bắt đầu ▶️</button>
+  </div>
+</div>
+
+<!-- Màn hình Chọn chế độ -->
+<div id="screen-mode" class="screen">
+  <h2>Chọn chế độ chơi</h2>
+  <div class="card">
+    <button class="btn-primary" id="btnVsAI">🤖 Chơi với máy</button>
+    <br><br>
+    <button class="btn-secondary" id="btnVsFriends">👥 Chơi với bạn bè</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackWelcome">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình Chọn kiểu chơi với máy -->
+<div id="screen-ai-select" class="screen">
+  <h2>Chơi với máy</h2>
+  <div class="card">
+    <button class="btn-primary" id="btnSingleVsAI">1 vs Máy — Tính điểm đến 10</button>
+    <br><br>
+    <button class="btn-secondary" id="btnMultiVsAI">Vượt cấp — Đánh bại n con máy</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackMode">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình Chọn số máy -->
+<div id="screen-ai-count" class="screen">
+  <h2>Chọn số lượng đối thủ máy</h2>
+  <div class="card">
+    <p>Bạn muốn vượt cấp với bao nhiêu máy?</p>
+    <div class="count-list" id="aiCountList">
+      <button class="count-option selected" data-count="1">1</button>
+      <button class="count-option" data-count="2">2</button>
+      <button class="count-option" data-count="3">3</button>
+      <button class="count-option" data-count="4">4</button>
+      <button class="count-option" data-count="5">5</button>
+      <button class="count-option" data-count="6">6</button>
+      <button class="count-option" data-count="7">7</button>
+      <button class="count-option" data-count="8">8</button>
+      <button class="count-option" data-count="9">9</button>
+      <button class="count-option" data-count="10">10</button>
+    </div>
+    <p>Số cấp cần vượt: <span id="totalLevelsDisplay">1</span> cấp</p>
+    <br>
+    <button class="btn-primary" id="btnStartAI">Bắt đầu! 🎮</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackAISelect">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình Chơi với bạn bè -->
+<div id="screen-friends-select" class="screen">
+  <h2>Chơi với bạn bè</h2>
+  <div class="card">
+    <button class="btn-primary" id="btnCreateRoom">🏠 Tạo phòng mới</button>
+    <br><br>
+    <p>Hoặc nhập mã phòng để tham gia:</p>
+    <input type="text" id="roomCodeInput" placeholder="Nhập mã phòng" maxlength="10">
+    <br>
+    <button class="btn-secondary" id="btnJoinRoom">🚪 Tham gia phòng</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackModeFromFriends">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình Trong phòng -->
+<div id="screen-room" class="screen">
+  <h2>Phòng chơi</h2>
+  <div class="card">
+    <p>Mã phòng của bạn:</p>
+    <div class="room-code" id="roomCodeDisplay">----</div>
+    <button class="btn-secondary" id="copyRoomCode">📋 Sao chép mã</button>
+    
+    <h3>Danh sách người chơi:</h3>
+    <div id="roomPlayerList"></div>
+    
+    <button class="btn-primary hidden" id="btnStartGameRoom">▶️ Bắt đầu chơi</button>
+    <p id="waitingMsg">Đang chờ người khác tham gia...</p>
+    
+    <br>
+    <button class="btn-danger" id="btnLeaveRoom">🚪 Rời phòng</button>
+    <br><br>
+    <button class="btn-secondary" id="btnBackFromRoom">⬅️ Quay lại</button>
+  </div>
+</div>
+
+<!-- Màn hình Đang chơi game -->
+<div id="screen-game" class="screen">
+  <h2 id="gameTitle">Trận đấu</h2>
+  
+  <div id="scoreBoard" class="score-board" style="display: none;">
+    <div>
+      <div class="player-name" id="playerNameDisplay">Bạn</div>
+      <div class="player-points" id="playerPoints">0</div>
+    </div>
+    <div class="vs-text">VS</div>
+    <div>
+      <div class="player-name" id="aiNameDisplay">Đối thủ</div>
+      <div class="player-points" id="aiPoints">0</div>
+    </div>
+  </div>
+  
+  <div id="levelProgressContainer" class="level-progress hidden">
+    <p id="levelText">Cấp 1 / 1</p>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  
+  <div id="resultCompare" class="result-compare"></div>
+  <div class="status-msg" id="statusMsg">Đang chuẩn bị...</div>
+  
+  <div id="gameControls">
+    <p>Bạn chọn lượt đi:</p>
+    <button class="choice-btn" data-choice="rock">✊</button>
+    <button class="choice-btn" data-choice="scissors">✌️</button>
+    <button class="choice-btn" data-choice="paper">🖐️</button>
+  </div>
+  
+  <div id="gameEndActions" class="hidden">
+    <button class="btn-primary" id="btnPlayAgain">🔄 Chơi lại</button>
+    <br><br>
+  </div>
+  
+  <button class="btn-secondary" id="btnBackToMenu">⬅️ Quay lại menu</button>
+</div>
+
+<!-- Firebase SDK không dùng module -->
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database-compat.js"></script>
+
+<script>
+  // ===== KHỞI TẠO FIREBASE =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyBKPmfYO2G17iEfx2V3Kh9fwDKPvwsB-iY",
+    authDomain: "keobuabao-db4b0.firebaseapp.com",
+    databaseURL: "https://keobuabao-db4b0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "keobuabao-db4b0",
+    storageBucket: "keobuabao-db4b0.firebasestorage.app",
+    messagingSenderId: "321649025626",
+    appId: "1:321649025626:web:53a3709380f6d249572e63"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ===== BIẾN TOÀN CỤC =====
+  let playerName = "";
+  let playerAvatar = "🦖";
+  let playerId = "";
+  let currentRoomCode = null;
+  let gameMode = null;
+  let scorePlayer = 0, scoreAI = 0;
+  let gameEnded = false, isProcessing = false;
+  let currentLevel = 1, totalLevels = 1;
+  let aiOpponentName = "";
+  let roomPlayers = {};
+  let unsubscribeRoom = null;
+  let accessSettings = { announceResult: false, musicEnabled: false, soundEnabled: true };
+
+  // ===== DANH SÁCH TÊN MÁY & LỜI NÓI =====
+  const aiNames = [
+    "Búa Bao Vương 👑", "Kéo Siêu Văng ✂️", "Bao Bao Đường 🖐️", "Đầu To Chơi Dở 🤕", 
+    "Chân Ngắn Chạy Chậm 🦵", "Thua Không Khóc 😭", "Đấu Sĩ Mới Nhập Môn 🐣", 
+    "Thần Sầu Cấp 3 🤡", "Bốc Bừa Bốc Ngẫu 🎲", "Mày Đâu Thắng Được Tao 😎",
+    "Tao Chơi Bằng Cảm Xúc 💖", "Kéo Luôn Thắng ✌️", "Búa Này Không Có Nhọn 🪨"
+  ];
+  const tauntsWin = [
+    "Hahaha, mày ăn hành nha! 😂", "Đi về tập lại nha em 👋", "Cỡ này thì tao chơi mười người một lúc cũng được 😎",
+    "Mày chưa đủ trình đâu nha 😉", "Ối giời ơi, yếu quá vậy má 😆"
+  ];
+  const tauntsLose = [
+    "Ối, mày lừa tao à! 😤", "Đừng Mừng Quá Sớm Nha! 😠", "May Thôi! Đúng Là May Rủi! 🎲",
+    "Ừ được đó, có chút tiến bộ 😉", "Đừng Kiêu, Lần Sau Mày Xem! 😒"
+  ];
+  const tauntsTie = [
+    "Ồ, cùng suy nghĩ à? 😏", "Kẹt này kìa, ai cũng không tiến bộ được 😂",
+    "Đồng thanh đồng khí, hay là mình có duyên? 😜"
+  ];
+  const choiceEmoji = { rock: '✊ Búa', paper: '🖐️ Bao', scissors: '✌️ Kéo' };
+  const choiceLabels = { rock: 'Búa', paper: 'Bao', scissors: 'Kéo' };
+
+  function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function getRandomAIName() { return getRandomItem(aiNames); }
+  function generateRoomCode() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+  function speak(text) {
+    if (!accessSettings.announceResult || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'vi-VN'; u.rate = 1.1; window.speechSynthesis.speak(u);
+  }
+
+  // ===== CHUYỂN MÀN HÌNH =====
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    closeMenuPanel();
+    isProcessing = false;
+  }
+
+  // ===== MENU =====
+  const menuPanel = document.getElementById('menuPanel');
+  document.getElementById('menuToggle').onclick = () => menuPanel.classList.toggle('open');
+  document.getElementById('closeMenu').onclick = closeMenuPanel;
+  function closeMenuPanel() { menuPanel.classList.remove('open'); }
+  document.getElementById('accessibilityToggle').onchange = e => accessSettings.announceResult = e.target.checked;
+  document.getElementById('musicToggle').onchange = e => accessSettings.musicEnabled = e.target.checked;
+  document.getElementById('soundToggle').onchange = e => accessSettings.soundEnabled = e.target.checked;
+
+  // ===== CHỌN AVATAR — ĐÃ SỬA =====
+  document.querySelectorAll('.avatar-option').forEach(opt => {
+    opt.onclick = function() {
+      document.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+      playerAvatar = this.dataset.avatar;
+    };
+  });
+
+  // ===== CHỌN SỐ LƯỢNG MÁY =====
+  document.querySelectorAll('.count-option').forEach(opt => {
+    opt.onclick = function() {
+      document.querySelectorAll('.count-option').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+      totalLevels = parseInt(this.dataset.count);
+      document.getElementById('totalLevelsDisplay').textContent = totalLevels;
+    };
+  });
+
+  // ===== NÚT ĐIỀU HƯỚNG — ĐƠN GIẢN, CHẮC CHẮN =====
+  document.getElementById('btnStart').onclick = function() {
+    const nameInput = document.getElementById('playerNameInput');
+    playerName = nameInput.value.trim() || "Bạn";
+    playerId = 'p-' + Date.now();
+    showScreen('screen-mode');
+  };
+  document.getElementById('btnBackWelcome').onclick = () => showScreen('screen-welcome');
+  document.getElementById('btnBackMode').onclick = () => showScreen('screen-mode');
+  document.getElementById('btnBackAISelect').onclick = () => showScreen('screen-ai-select');
+  document.getElementById('btnBackToMenu').onclick = () => { if(confirm('Quay lại menu?')) showScreen('screen-ai-select'); };
+  document.getElementById('btnBackModeFromFriends').onclick = () => showScreen('screen-mode');
+  document.getElementById('btnBackFromRoom').onclick = () => { leaveRoom(); showScreen('screen-friends-select'); };
+
+  document.getElementById('btnVsAI').onclick = () => showScreen('screen-ai-select');
+  document.getElementById('btnSingleVsAI').onclick = startSingleVsAI;
+  document.getElementById('btnMultiVsAI').onclick = () => showScreen('screen-ai-count');
+  document.getElementById('btnStartAI').onclick = startLevelUpGame;
+  document.getElementById('btnVsFriends').onclick = () => showScreen('screen-friends-select');
+
+  // ===== LOGIC 1 vs 1 TÍNH ĐIỂM =====
+  function startSingleVsAI() {
+    gameMode = 'ai-single';
+    gameEnded = false;
+    isProcessing = false;
+    scorePlayer = 0; scoreAI = 0;
+    aiOpponentName = getRandomAIName();
+    
+    showScreen('screen-game');
+    document.getElementById('gameTitle').textContent = '1 vs Máy — Tính điểm đến 10';
+    document.getElementById('scoreBoard').style.display = 'flex';
+    document.getElementById('levelProgressContainer').classList.add('hidden');
+    document.getElementById('playerNameDisplay').textContent = playerName;
+    document.getElementById('aiNameDisplay').textContent = aiOpponentName;
+    updateScoreDisplay();
+    document.getElementById('resultCompare').textContent = '';
+    document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('gameEndActions').classList.add('hidden');
+    setStatus(`Bắt đầu! Đối thủ của bạn là: ${aiOpponentName}`);
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('playerPoints').textContent = scorePlayer;
+    document.getElementById('aiPoints').textContent = scoreAI;
+  }
+
+  function setStatus(msg, speechText) {
+    document.getElementById('statusMsg').textContent = msg;
+    if (speechText) speak(speechText);
+  }
+
+  function determineWinner(p, a) {
+    if (p === a) return 'tie';
+    const rules = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
+    return rules[p] === a ? 'player' : 'ai';
+  }
+
+  // ===== NÚT CHỌN KÉO/BÚA/BAO =====
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.onclick = function() {
+      if (gameEnded || isProcessing) return;
+      const choice = this.dataset.choice;
+      if (gameMode === 'ai-single') handlePlayerChoiceSingle(choice);
+      else if (gameMode === 'ai-levelup') handlePlayerChoiceLevelUp(choice);
+    };
+  });
+
+  document.getElementById('btnPlayAgain').onclick = function() {
+    if (gameMode === 'ai-single') startSingleVsAI();
+    else startLevelUpGame();
+  };
+
+  function handlePlayerChoiceSingle(playerChoice) {
+    if (gameEnded || isProcessing) return;
+    isProcessing = true;
+
+    const choices = ['rock', 'paper', 'scissors'];
+    const aiChoice = choices[Math.floor(Math.random() * 3)];
+    const result = determineWinner(playerChoice, aiChoice);
+    
+    document.getElementById('resultCompare').innerHTML = 
+      `${playerName}: ${choiceEmoji[playerChoice]}<br>${aiOpponentName}: ${choiceEmoji[aiChoice]}`;
+    
+    let msg = '';
+    if (result === 'tie') {
+      const taunt = getRandomItem(tauntsTie);
+      msg = `Hòa! Cùng chọn ${choiceLabels[playerChoice]}! ${taunt}`;
+    } else if (result === 'player') {
+      scorePlayer++;
+      msg = `Bạn thắng ván này! Điểm: ${scorePlayer} - ${scoreAI}`;
+    } else {
+      scoreAI++;
+      const taunt = getRandomItem(tauntsWin);
+      msg = `${aiOpponentName} thắng! ${taunt} Điểm: ${scorePlayer} - ${scoreAI}`;
+    }
+    
+    updateScoreDisplay();
+    setStatus(msg);
+    
+    if (scorePlayer >= 10 || scoreAI >= 10) {
+      gameEnded = true;
+      const win = scorePlayer >= 10;
+      const finalMsg = win 
+        ? `🏆 CHÚC MỪNG ${playerName.toUpperCase()}! BẠN THẮNG TOÀN TRẬN VỚI TỶ SỐ ${scorePlayer} - ${scoreAI}!` 
+        : `😔 ${aiOpponentName} thắng toàn trận với tỷ số ${scorePlayer} - ${scoreAI}! Cố gắng lần sau nha!`;
+      setStatus(finalMsg);
+      document.getElementById('gameEndActions').classList.remove('hidden');
+    } else {
+      setTimeout(() => {
+        isProcessing = false;
+        setStatus('Tiếp theo! Chọn Búa, Kéo hoặc Bao!');
+      }, 1500);
+    }
+  }
+
+  // ===== LOGIC VƯỢT CẤP =====
+  function startLevelUpGame() {
+    gameMode = 'ai-levelup';
+    gameEnded = false;
+    isProcessing = false;
+    currentLevel = 1;
+    
+    showScreen('screen-game');
+    document.getElementById('gameTitle').textContent = `Vượt cấp — ${totalLevels} đối thủ`;
+    document.getElementById('scoreBoard').style.display = 'none';
+    document.getElementById('levelProgressContainer').classList.remove('hidden');
+    document.getElementById('resultCompare').textContent = '';
+    document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('gameEndActions').classList.add('hidden');
+    
+    updateLevelUI();
+  }
+
+  function updateLevelUI() {
+    aiOpponentName = getRandomAIName();
+    document.getElementById('levelText').textContent = `Cấp ${currentLevel} / ${totalLevels} — Đối thủ: ${aiOpponentName}`;
+    document.getElementById('progressFill').style.width = `${((currentLevel - 1) / totalLevels) * 100}%`;
+    setStatus(`Bắt đầu cấp ${currentLevel}! Đối thủ: ${aiOpponentName}`);
+  }
+
+  function handlePlayerChoiceLevelUp(playerChoice) {
+    if (gameEnded || isProcessing) return;
+    isProcessing = true;
+
+    const choices = ['rock', 'paper', 'scissors'];
+    const aiChoice = choices[Math.floor(Math.random() * 3)];
+    const result = determineWinner(playerChoice, aiChoice);
+    
+    document.getElementById('resultCompare').innerHTML = 
+      `${playerName}: ${choiceEmoji[playerChoice]}<br>${aiOpponentName}: ${choiceEmoji[aiChoice]}`;
+    
+    let msg = '';
+    if (result === 'tie') {
+      msg = `Hòa! Chọn lại nha!`;
+      setTimeout(() => { isProcessing = false; setStatus('Chọn lại Búa, Kéo hoặc Bao!'); }, 1500);
+    } else if (result === 'player') {
+      msg = `Bạn thắng cấp ${currentLevel}!`;
+      if (currentLevel < totalLevels) {
+        currentLevel++;
+        setTimeout(updateLevelUI, 1500);
+      } else {
+        gameEnded = true;
+        msg = `🏆 CHÚC MỪNG ${playerName.toUpperCase()}! BẠN ĐÃ ĐÁNH BẠI HẾT ${totalLevels} ĐỐI THỦ!`;
+        setStatus(msg);
+        document.getElementById('gameEndActions').classList.remove('hidden');
+        isProcessing = false;
+      }
+    } else {
+      msg = `${aiOpponentName} thắng! Bạn thua! Bấm "Chơi lại" để bắt đầu từ cấp 1!`;
+      gameEnded = true;
+      setStatus(msg);
+      document.getElementById('gameEndActions').classList.remove('hidden');
+      isProcessing = false;
+    }
+    if (msg) setStatus(msg);
+  }
+
+  // ===== PHÒNG CHƠI FIREBASE =====
+  function renderRoomPlayerList() {
+    const list = document.getElementById('roomPlayerList');
+    list.innerHTML = '';
+    Object.values(roomPlayers || {}).forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'player-item';
+      div.innerHTML = `<span>${p.avatar} ${p.name}</span>${p.isHost ? '<span class="host-badge">Chủ phòng</span>' : ''}`;
+      list.appendChild(div);
+    });
+    const isHost = roomPlayers && roomPlayers[playerId]?.isHost;
+    const hasEnough = roomPlayers && Object.keys(roomPlayers).length >= 2;
+    document.getElementById('btnStartGameRoom').classList.toggle('hidden', !(isHost && hasEnough));
+    document.getElementById('waitingMsg').classList.toggle('hidden', hasEnough);
+  }
+
+  function leaveRoom() {
+    if (!currentRoomCode) return;
+    if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+    db.ref('rooms/' + currentRoomCode + '/players/' + playerId).remove();
+    currentRoomCode = null;
+    roomPlayers = {};
+  }
+
+  document.getElementById('btnCreateRoom').onclick = async function() {
+    const code = generateRoomCode();
+    currentRoomCode = code;
+    roomPlayers = {};
+    roomPlayers[playerId] = { id: playerId, name: playerName, avatar: playerAvatar, isHost: true };
+    
+    await db.ref('rooms/' + code + '/players/' + playerId).set(roomPlayers[playerId]);
+    await db.ref('rooms/' + code + '/gameStarted').set(false);
+    
+    document.getElementById('roomCodeDisplay').textContent = code;
+    showScreen('screen-room');
+    renderRoomPlayerList();
+    
+    unsubscribeRoom = db.ref('rooms/' + code + '/players').on('value', snap => {
+      roomPlayers = snap.val() || {};
+      renderRoomPlayerList();
+    });
+  };
+
+  document.getElementById('btnJoinRoom').onclick = async function() {
+    const code = document.getElementById('roomCodeInput').value.trim();
+    if (!code) { alert('Nhập mã phòng!'); return; }
+    
+    const snap = await db.ref('rooms/' + code).get();
+    if (!snap.exists()) { alert('Mã phòng không tồn tại!'); return; }
+    const data = snap.val();
+    if (data.gameStarted) { alert('Trận đấu đã bắt đầu rồi!'); return; }
+    
+    currentRoomCode = code;
+    roomPlayers = data.players || {};
+    roomPlayers[playerId] = { id: playerId, name: playerName, avatar: playerAvatar, isHost: false };
+    
+    await db.ref('rooms/' + code + '/players/' + playerId).set(roomPlayers[playerId]);
+    
+    document.getElementById('roomCodeDisplay').textContent = code;
+    showScreen('screen-room');
+    renderRoomPlayerList();
+    
+    unsubscribeRoom = db.ref('rooms/' + code + '/players').on('value', snap => {
+      roomPlayers = snap.val() || {};
+      renderRoomPlayerList();
+    });
+  };
+
+  document.getElementById('copyRoomCode').onclick = function() {
+    if (!currentRoomCode) return;
+    navigator.clipboard.writeText(currentRoomCode).then(() => alert('Đã sao chép: ' + currentRoomCode));
+  };
+
+  document.getElementById('btnLeaveRoom').onclick = function() {
+    leaveRoom();
+    showScreen('screen-friends-select');
+  };
+</script>
+
+</body>
+</html>
